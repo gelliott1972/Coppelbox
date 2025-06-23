@@ -27,7 +27,7 @@ void mqtt_publish_relay_state(int relay, bool state) {
 void mqtt_init(void)
 {
     const esp_mqtt_client_config_t mqtt_cfg = {
-        .uri = MQTT_SERVER_URI,
+        .broker.address.uri = MQTT_SERVER_URI,
     };
 
     client = esp_mqtt_client_init(&mqtt_cfg);
