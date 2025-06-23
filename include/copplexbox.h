@@ -21,4 +21,15 @@
 // MQTT server IP
 #define MQTT_SERVER_URI "mqtt://192.168.50.168"
 
+// EMAC (Ethernet MAC) GPIOs
+#define EMAC_MDC_GPIO 23  // Replace with your actual MDC GPIO
+#define EMAC_MDIO_GPIO 18 // Replace with your actual MDIO GPIO
+
+// Define GPIO pins for SPI communication
+#define W5500_MOSI  23
+#define W5500_MISO  19
+#define W5500_SCLK  18
+#define W5500_CS    5
+
+
 #endif // COPPLEXBOX_H
