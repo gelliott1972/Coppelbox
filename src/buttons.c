@@ -5,55 +5,61 @@
 
 #include "buttons.h"
 #include "copplexbox.h"
-#include "driver/adc.h"
+#include "esp_adc/adc_oneshot.h"
 #include "esp_log.h"
 #include <stdbool.h>
 
 #define INVALID -1
-#define ADC_WIDTH ADC_WIDTH_BIT_12
+#define ADC_WIDTH ADC_BITWIDTH_12
 #define ADC_ATTEN ADC_ATTEN_DB_11
 
 static const char *TAG = "BUTTONS";
 static bool button_state[BUTTON_COUNT] = {false, false, false};
 
+// ADC oneshot driver handle
+static adc_oneshot_unit_handle_t adc_handle;
+static adc_channel_t adc_channel;
+
 void buttons_init(void) {
     ESP_LOGI(TAG, "Initializing ADC on GPIO %d", BUTTON_ADC_GPIO);
 
-    adc1_config_width(ADC_WIDTH);
-    adc1_channel_t channel;
+    // Configure ADC unit
+    adc_oneshot_unit_init_cfg_t unit_cfg = {
+        .unit_id = ADC_UNIT_1,
+    };
+    ESP_ERROR_CHECK(adc_oneshot_new_unit(&unit_cfg, &adc_handle));
 
+    // Determine the ADC channel based on the GPIO
     switch (BUTTON_ADC_GPIO) {
-        case 36: channel = ADC1_CHANNEL_0; break;
-        case 37: channel = ADC1_CHANNEL_1; break;
-        case 38: channel = ADC1_CHANNEL_2; break;
-        case 39: channel = ADC1_CHANNEL_3; break;
-        case 32: channel = ADC1_CHANNEL_4; break;
-        case 33: channel = ADC1_CHANNEL_5; break;
-        case 34: channel = ADC1_CHANNEL_6; break;
-        case 35: channel = ADC1_CHANNEL_7; break;
+        case 36: adc_channel = ADC_CHANNEL_0; break;
+        case 37: adc_channel = ADC_CHANNEL_1; break;
+        case 38: adc_channel = ADC_CHANNEL_2; break;
+        case 39: adc_channel = ADC_CHANNEL_3; break;
+        case 32: adc_channel = ADC_CHANNEL_4; break;
+        case 33: adc_channel = ADC_CHANNEL_5; break;
+        case 34: adc_channel = ADC_CHANNEL_6; break;
+        case 35: adc_channel = ADC_CHANNEL_7; break;
         default:
             ESP_LOGE(TAG, "Invalid ADC1 GPIO: %d", BUTTON_ADC_GPIO);
             return;
     }
 
-    adc1_config_channel_atten(channel, ADC_ATTEN);
+    // Configure the ADC channel
+    adc_oneshot_chan_cfg_t chan_cfg = {
+        .bitwidth = ADC_WIDTH,
+        .atten = ADC_ATTEN,
+    };
+    ESP_ERROR_CHECK(adc_oneshot_config_channel(adc_handle, adc_channel, &chan_cfg));
 }
 
 static int read_adc(void) {
-    adc1_channel_t channel;
-    switch (BUTTON_ADC_GPIO) {
-        case 36: channel = ADC1_CHANNEL_0; break;
-        case 37: channel = ADC1_CHANNEL_1; break;
-        case 38: channel = ADC1_CHANNEL_2; break;
-        case 39: channel = ADC1_CHANNEL_3; break;
-        case 32: channel = ADC1_CHANNEL_4; break;
-        case 33: channel = ADC1_CHANNEL_5; break;
-        case 34: channel = ADC1_CHANNEL_6; break;
-        case 35: channel = ADC1_CHANNEL_7; break;
-        default: return -1;
+    int adc_val = 0;
+    esp_err_t err = adc_oneshot_read(adc_handle, adc_channel, &adc_val);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to read ADC value: %s", esp_err_to_name(err));
+        return -1;
     }
-
-    return adc1_get_raw(channel);
+    return adc_val;
 }
 
 static int detect_button(int adc_val) {
