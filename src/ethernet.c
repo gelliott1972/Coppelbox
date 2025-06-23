@@ -15,7 +15,7 @@
 
 
 #include "ethernet.h"
-#include "copplexbox.h"
+#include "copplebox.h"
 
 static const char *TAG = "ETH_W5500";
 
@@ -73,6 +73,12 @@ void ethernet_init(void)
 
     ESP_LOGI(TAG, "Step 8: esp_eth_mac_new_w5500");
     esp_eth_mac_t *mac = esp_eth_mac_new_w5500(&w5500_config, &mac_config);
+    uint8_t mac_addr[6];
+    if (mac && mac->get_addr && mac->get_addr(mac, mac_addr) == ESP_OK) {
+        ESP_LOGI(TAG, "MAC address: %02X:%02X:%02X:%02X:%02X:%02X", mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
+    } else {
+        ESP_LOGI(TAG, "Failed to get MAC address");
+    }
     ESP_LOGI(TAG, "Step 8 done");
 
     ESP_LOGI(TAG, "Step 9: esp_eth_phy_new_w5500");

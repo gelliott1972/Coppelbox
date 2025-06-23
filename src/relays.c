@@ -4,7 +4,7 @@
  */
 
 #include "relays.h"
-#include "copplexbox.h"
+#include "copplebox.h"
 #include "driver/gpio.h"
 #include "esp_log.h"
 #include <stdbool.h>

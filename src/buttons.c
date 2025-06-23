@@ -4,7 +4,7 @@
  */
 
 #include "buttons.h"
-#include "copplexbox.h"
+#include "copplebox.h"
 #include "esp_adc/adc_oneshot.h"
 #include "esp_log.h"
 #include <stdbool.h>
