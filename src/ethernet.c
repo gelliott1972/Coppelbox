@@ -49,17 +49,18 @@ void ethernet_init(void)
         .quadhd_io_num = -1,
         .max_transfer_sz = 4096
     };
-    ESP_ERROR_CHECK(spi_bus_initialize(SPI2_HOST, &buscfg, SPI_DMA_CH_AUTO));
+    ESP_ERROR_CHECK(spi_bus_initialize(SPI2_HOST, &buscfg, SPI_DMA_DISABLED));
     ESP_LOGI(TAG, "Step 5 done");
 
     ESP_LOGI(TAG, "Step 6: spi_bus_add_device");
+    // Changed to same as SPI test code that worked.
     spi_device_interface_config_t devcfg = {
-        .command_bits = 16,
-        .address_bits = 8,
-        .mode = 0,
         .clock_speed_hz = 1 * 1000 * 1000, // Lowered for debug
+        .mode = 0,
         .spics_io_num = W5500_CS,
-        .queue_size = 20
+        .command_bits = 0,
+        .queue_size = 1,
+        .address_bits = 0
     };
     spi_device_handle_t spi_handle;
     ESP_ERROR_CHECK(spi_bus_add_device(SPI2_HOST, &devcfg, &spi_handle));
