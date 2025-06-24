@@ -64,8 +64,9 @@ void ethernet_init(void)
     };
     spi_device_handle_t spi_handle;
     ESP_ERROR_CHECK(spi_bus_add_device(SPI2_HOST, &devcfg, &spi_handle));
+    vTaskDelay(pdMS_TO_TICKS(250));
     ESP_LOGI(TAG, "Step 6 done");
-
+/*
     ESP_LOGI(TAG, "Step 6a: manually check SPI");
      // Compose the command frame
     uint8_t cmd_buf[3] = { 0x00, 0x39, 0x00 };  // Address + control byte
@@ -92,20 +93,34 @@ void ethernet_init(void)
 
     ESP_LOGI(TAG, "W5500 Version Register: 0x%02X", tx_rx_buf[3]);   
     ESP_LOGI(TAG, "Step 6a done");
-
+*/
     ESP_LOGI(TAG, "Step 7: ETH_W5500_DEFAULT_CONFIG");
     eth_mac_config_t mac_config = ETH_MAC_DEFAULT_CONFIG();
     eth_phy_config_t phy_config = ETH_PHY_DEFAULT_CONFIG();
+    phy_config.reset_gpio_num = -1;
     eth_w5500_config_t w5500_config = ETH_W5500_DEFAULT_CONFIG(SPI2_HOST, &devcfg);
     ESP_LOGI(TAG, "Step 7 done");
 
     ESP_LOGI(TAG, "Step 8: esp_eth_mac_new_w5500");
     esp_eth_mac_t *mac = esp_eth_mac_new_w5500(&w5500_config, &mac_config);
+
+    // Set a default MAC address
+    uint8_t default_mac[6] = {0x02, 0x00, 0x00, 0x00, 0x00, 0x01}; // Example MAC address
+    if (mac && mac->set_addr) {
+        ESP_ERROR_CHECK(mac->set_addr(mac, default_mac));
+        ESP_LOGI(TAG, "Default MAC address set: %02X:%02X:%02X:%02X:%02X:%02X", 
+                 default_mac[0], default_mac[1], default_mac[2], 
+                 default_mac[3], default_mac[4], default_mac[5]);
+    }
+
+    // Retrieve and log the MAC address to confirm it was set
     uint8_t mac_addr[6];
     if (mac && mac->get_addr && mac->get_addr(mac, mac_addr) == ESP_OK) {
-        ESP_LOGI(TAG, "MAC address: %02X:%02X:%02X:%02X:%02X:%02X", mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
+        ESP_LOGI(TAG, "MAC address in use: %02X:%02X:%02X:%02X:%02X:%02X", 
+                 mac_addr[0], mac_addr[1], mac_addr[2], 
+                 mac_addr[3], mac_addr[4], mac_addr[5]);
     } else {
-        ESP_LOGI(TAG, "Failed to get MAC address");
+        ESP_LOGE(TAG, "Failed to get MAC address");
     }
     ESP_LOGI(TAG, "Step 8 done");
 
