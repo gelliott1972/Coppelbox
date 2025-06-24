@@ -66,6 +66,33 @@ void ethernet_init(void)
     ESP_ERROR_CHECK(spi_bus_add_device(SPI2_HOST, &devcfg, &spi_handle));
     ESP_LOGI(TAG, "Step 6 done");
 
+    ESP_LOGI(TAG, "Step 6a: manually check SPI");
+     // Compose the command frame
+    uint8_t cmd_buf[3] = { 0x00, 0x39, 0x00 };  // Address + control byte
+    uint8_t rx_data = 0;
+
+    spi_transaction_t t = {
+        .length = 8 * 4,
+        .tx_buffer = cmd_buf,
+        .rx_buffer = &rx_data,
+        .flags = SPI_TRANS_USE_RXDATA,
+    };
+
+    // Pad rx buffer with 1 dummy byte so we read the 4th byte correctly
+    uint8_t tx_rx_buf[4] = { 0x00, 0x39, 0x00, 0x00 };
+    memset(&t, 0, sizeof(t));
+    t.length = 8 * 4;
+    t.tx_buffer = tx_rx_buf;
+    t.rx_buffer = tx_rx_buf;
+
+    ESP_LOGI(TAG, "Reading version register...");
+    esp_err_t ret;
+    ret = spi_device_transmit(spi_handle, &t);
+    ESP_ERROR_CHECK(ret);
+
+    ESP_LOGI(TAG, "W5500 Version Register: 0x%02X", tx_rx_buf[3]);   
+    ESP_LOGI(TAG, "Step 6a done");
+
     ESP_LOGI(TAG, "Step 7: ETH_W5500_DEFAULT_CONFIG");
     eth_mac_config_t mac_config = ETH_MAC_DEFAULT_CONFIG();
     eth_phy_config_t phy_config = ETH_PHY_DEFAULT_CONFIG();
